@@ -1,0 +1,13 @@
+wp-config.php 
+default.html 
+error_log 
+wp-content/uploads 
+.htaccess 
+.well-known 
+cgi-bin
+#ignore node dependency directories 
+node_modules/ 
+#ignore log files and databases
+*.log 
+*.sql
+*.sqlite

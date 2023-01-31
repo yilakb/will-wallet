@@ -1,0 +1,5 @@
+[04-Dec-2019 09:11:31 CST6CDT] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/localbox/public_html/will-wallet.com/call.php on line 33
+[04-Dec-2019 13:44:04 CST6CDT] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/localbox/public_html/will-wallet.com/call.php on line 33
+[25-Jul-2020 08:24:55 CST6CDT] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/localbox/public_html/will-wallet.com/call.php on line 33
+[25-Jul-2020 08:33:40 CST6CDT] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/localbox/public_html/will-wallet.com/call.php on line 33
+[25-Jul-2020 08:42:21 CST6CDT] PHP Fatal error:  Cannot use isset() on the result of an expression (you can use "null !== expression" instead) in /home/localbox/public_html/will-wallet.com/call.php on line 33
