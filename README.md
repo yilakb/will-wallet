@@ -4,7 +4,7 @@ Live version available at https://will-wallet.com/
 
 Github URL: https://github.com/yilakb/will-wallet
 
-Coinb.in supports a number of key features such as:
+Will-wallet.com supports a number of key features such as:
 
 Offline Compressed & uncompressed Address creation.
 Offline Multisignature Address creation.
