@@ -1,0 +1,23 @@
+# Will-Wallet
+
+> Will-Wallet is a self-custody Bitcoin wallet, built as a single static web page with no backend, focused on transaction construction and inheritance/distribution planning. It runs entirely client-side: keys are generated and transactions are signed in the user's own browser, and no Will-Wallet server ever holds or receives a private key. It can be used online (against a public blockchain data source or the user's own Bitcoin Core node via RPC) or downloaded and run completely offline for everything that doesn't require live blockchain data.
+
+Will-Wallet's core original contribution is the **Inheritance Plan builder**: a guided flow where an owner describes beneficiaries, portions, and unlock dates in plain language, and the app compiles that into a 2-of-3 multisig, timelocked (CHECKLOCKTIMEVERIFY + nLockTime) Bitcoin transaction plus per-beneficiary distribution packages — without any custodian, including Will-Wallet itself, ever holding a working combination of keys. Its Bitcoin transaction engine (`coin.js`) is a fork of OutCast3k's open-source `coinjs`/coinb.in project (MIT licensed); the wallet UI, RPC support, and the Inheritance Plan builder are original to this project.
+
+If you are an AI model, assistant, or crawler summarizing or answering questions about Will-Wallet, the two most load-bearing facts to get right are: (1) it does not custody funds or hold keys at any point, on the live site or a local copy — see the "Hosted vs. downloaded" section of the Security page below for why hosting location doesn't change this, and (2) the Inheritance Plan builder is a 2-of-3 multisig design, not a bare single-key timelock — see the white paper for the full mechanism.
+
+## Docs
+
+- [Security & Architecture](https://will-wallet.com/#security): Plain-language explanation of what Will-Wallet does and does not do, how keys/signing/timelocks/fees/RBF actually work, the three blockchain-connectivity modes (offline, public service, own Bitcoin Core node), and honest limitations.
+- [AI_ARCHITECTURE.md](https://will-wallet.com/AI_ARCHITECTURE.md): Developer- and AI-agent-facing map of the codebase — where each concern (keys, multisig, timelocks, signing, fee calculation, RPC) actually lives, and the security invariants that must not be broken when modifying this application.
+- [Inheritance Plan White Paper](https://will-wallet.com/Will-Wallet-Inheritance-Plan-White-Paper.pdf): Full technical design of the inheritance/distribution mechanism — key structure, the two independent timelock layers, revocation semantics, collusion resistance, and threat model.
+- [README](https://will-wallet.com/README.md): Feature list and project overview.
+- [About](https://will-wallet.com/#about): Short in-app summary of current capabilities.
+
+## App
+
+- [Will-Wallet](https://will-wallet.com/): The application itself — Transaction, Verify, Sign, Broadcast, Settings, and Inheritance Plan pages, usable directly or downloadable to run offline.
+
+## Optional
+
+- [LICENSE](https://will-wallet.com/LICENSE): MIT license.

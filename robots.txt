@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# Explicitly welcoming AI/LLM crawlers and assistants - Will-Wallet is documented
+# specifically so people (and the AI tools they use) can understand how it works.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://will-wallet.com/sitemap.xml

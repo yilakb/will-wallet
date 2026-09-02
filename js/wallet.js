@@ -1387,20 +1387,26 @@ $(document).ready(function() {
 		return false;
 	}
 
-	function decodeTransactionScript(){
+	/* decode a raw transaction into a human-readable breakdown of its inputs,
+	   outputs, locktime and RBF status. Shared by the Verify page and, below,
+	   by the Sign page and the Inheritance Plan builder - so what a person is
+	   about to sign is always decoded with this one function, never re-implemented. */
+	function decodeTransactionScript(hex, $root){
+		hex = (hex===undefined) ? $("#verifyScript").val() : hex;
+		$root = $root || $("#verifyTransactionData");
 		var tx = coinjs.transaction();
 		try {
-			var decode = tx.deserialize($("#verifyScript").val());
-			$("#verifyTransactionData .transactionVersion").html(decode['version']);
-			$("#verifyTransactionData .transactionSize").html(decode.size()+' <i>bytes</i>');
-			$("#verifyTransactionData .transactionLockTime").html(decode['lock_time']);
-			$("#verifyTransactionData .transactionRBF").hide();
-			$("#verifyTransactionData .transactionSegWit").hide();
+			var decode = tx.deserialize(hex);
+			$root.find(".transactionVersion").html(decode['version']);
+			$root.find(".transactionSize").html(decode.size()+' <i>bytes</i>');
+			$root.find(".transactionLockTime").html(decode['lock_time']);
+			$root.find(".transactionRBF").hide();
+			$root.find(".transactionSegWit").hide();
 			if (decode.witness.length>=1) {
-				$("#verifyTransactionData .transactionSegWit").show();
+				$root.find(".transactionSegWit").show();
 			}
-			$("#verifyTransactionData").removeClass("hidden");
-			$("#verifyTransactionData tbody").html("");
+			$root.removeClass("hidden");
+			$root.find("tbody").html("");
 
 			var h = '';
 			$.each(decode.ins, function(i,o){
@@ -1427,11 +1433,11 @@ $(document).ready(function() {
 
 				//debug
 				if(parseInt(o.sequence)<(0xFFFFFFFF-1)){
-					$("#verifyTransactionData .transactionRBF").show();
+					$root.find(".transactionRBF").show();
 				}
 			});
 
-			$(h).appendTo("#verifyTransactionData .ins tbody");
+			$(h).appendTo($root.find(".ins tbody"));
 
 			h = '';
 			$.each(decode.outs, function(i,o){
@@ -1471,14 +1477,17 @@ $(document).ready(function() {
 					h += '</tr>';
 				}
 			});
-			$(h).appendTo("#verifyTransactionData .outs tbody");
+			$(h).appendTo($root.find(".outs tbody"));
 
-			$(".verifyLink").attr('href','?verify='+$("#verifyScript").val());
+			$root.find(".verifyLink").attr('href','?verify='+hex);
 			return true;
 		} catch(e) {
 			return false;
 		}
 	}
+	// exposed so other pages (Sign, the Inheritance Plan builder) can show the
+	// same decoded breakdown before signing, without a second implementation
+	window.decodeTransactionScript = decodeTransactionScript;
 
 	function hex2ascii(hex) {
 		var str = '';
@@ -1587,6 +1596,20 @@ $(document).ready(function() {
 
 
 	/* sign code */
+
+	/* decode and show exactly what a pasted transaction does, before it's signed -
+	   reuses the Verify page's own decoder (decodeTransactionScript) against this
+	   page's own preview block, so nothing about the decoding is duplicated */
+	$("#signTransaction").on("keyup change paste", function(){
+		var hex = $.trim($(this).val());
+		if(hex=='' || !hex.match(/^[a-f0-9]+$/i)){
+			$("#signTransactionData").addClass('hidden');
+			$("#signTransactionUndecodable").toggleClass('hidden', hex=='');
+			return;
+		}
+		var ok = decodeTransactionScript(hex, $("#signTransactionData"));
+		$("#signTransactionUndecodable").toggleClass('hidden', !!ok);
+	});
 
 	$("#signBtn").click(function(){
 		var wifkey = $("#signPrivateKey");
@@ -1752,6 +1775,41 @@ $(document).ready(function() {
 	}
 	$("#coinjs_broadcast, #coinjs_utxo").change(refreshRpcSettingsVisibility);
 	refreshRpcSettingsVisibility();
+
+	/* flag when the configured RPC host isn't this machine - a materially
+	   different trust boundary than a local node */
+	function isLoopbackHost(h){
+		h = $.trim(h).toLowerCase();
+		return h=='' || h=='127.0.0.1' || h=='localhost' || h=='::1';
+	}
+	$("#rpc_host").on("keyup change", function(){
+		$("#rpcRemoteWarning").toggleClass('hidden', isLoopbackHost($(this).val()));
+	});
+
+	/* verify the node actually answers, and that it's on the network this page
+	   is configured for - catches pointing a mainnet plan at a testnet/regtest
+	   node (or vice versa) before it causes confusion at broadcast time */
+	$("#rpcTestBtn").click(function(){
+		var expected = null; // no assumption for non-bitcoin / custom networks
+		var coinSel = $("#coinjs_coin").val();
+		if(coinSel=='bitcoin_mainnet'){ expected = 'main'; }
+		else if(coinSel=='bitcoin_testnet'){ expected = 'test'; }
+
+		$("#rpcTestStatus").removeClass('hidden alert-success alert-danger').addClass('alert').html('Checking&hellip;');
+		bitcoinCoreRpcCall('getblockchaininfo', [], function(info){
+			if(!info || !info.chain){
+				$("#rpcTestStatus").addClass('alert-danger').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Connected, but the response was not understood.');
+				return;
+			}
+			if(expected && info.chain!==expected){
+				$("#rpcTestStatus").addClass('alert-danger').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Connected, but this node is on <b>'+info.chain+'</b> while this page is set to Bitcoin <b>'+(expected=='main'?'mainnet':'testnet')+'</b>. Using it as-is risks scanning or broadcasting on the wrong network.');
+			} else {
+				$("#rpcTestStatus").addClass('alert-success').html('<span class="glyphicon glyphicon-ok"></span> Connected &mdash; node is on chain "'+info.chain+'", height '+info.blocks+'.');
+			}
+		}, function(err){
+			$("#rpcTestStatus").addClass('alert-danger').html('<span class="glyphicon glyphicon-exclamation-sign"></span> '+(err.message||'Could not connect.'));
+		});
+	});
 
 	$("#settingsBtn").click(function(){
 

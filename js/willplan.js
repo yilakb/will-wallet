@@ -616,6 +616,11 @@ $(document).ready(function(){
 		$("#planResultTx").val(built.hex);
 		$("#planResultFee").text(fmt(built.fee)+' ('+built.rate+' sat/vB × ≈'+built.size+' vB)');
 		$("#planResultWhen").text('— built '+built.when);
+		/* decode the exact bytes about to be signed, reusing the Sign/Verify pages'
+		   own decoder - never trust our own bookkeeping over what the tx itself says */
+		if(window.decodeTransactionScript){
+			window.decodeTransactionScript(built.hex, $("#planSignPreview"));
+		}
 		renderPackages();
 		$("#planResult").removeClass('hidden');
 	}
@@ -682,7 +687,10 @@ $(document).ready(function(){
 			L.push('This inheritance takes effect when the owner\'s monitoring arrangement confirms the release condition.');
 			L.push('This package should be held by that arrangement and delivered to the beneficiary at that time.');
 		}
-		L.push('If the owner revises the plan before release, this package becomes void.');
+		L.push('This package refers to one specific, still-unspent vault transaction output.');
+		L.push('It becomes void if the owner revises the plan, or if that vault output is spent,');
+		L.push('consolidated, or swept for any other reason before release - even accidentally.');
+		L.push('The owner should not reuse or spend from the vault address once this is distributed.');
 		L.push('');
 		L.push('YOUR PORTIONS');
 		$.each(b.allocations, function(i,a){

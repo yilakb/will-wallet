@@ -39,8 +39,8 @@
     <script type="text/javascript" src="js/ellipticcurve.js"></script>
 
     <script type="text/javascript" src="js/coin.js"></script>
-    <script type="text/javascript" src="js/wallet.js?v=1"></script>
-    <script type="text/javascript" src="js/willplan.js?v=6"></script>
+    <script type="text/javascript" src="js/wallet.js?v=2"></script>
+    <script type="text/javascript" src="js/willplan.js?v=7"></script>
     
 </head>
 
@@ -98,6 +98,7 @@ div.fixed {
                 <a href="#broadcast" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Broadcast</a>
                 
                 <a href="#about" class="w3-bar-item w3-button w3-hide-small w3-hide-medium w3-hover-white">About</a>
+                <a href="#security" class="w3-bar-item w3-button w3-hide-small w3-hide-medium w3-hover-white">Security</a>
             </div>
         </div>
 
@@ -670,7 +671,7 @@ div.fixed {
                                 </div>
                                 <hr>
                                 <div id="planChecklist"></div>
-                                <p class="small text-muted hidden" id="planBuildNote">Building compiles your plan into the actual inheritance transaction, exactly as configured above. You can rebuild after any change &mdash; a rebuilt transaction replaces this one.</p>
+                                <p class="small text-muted hidden" id="planBuildNote">Building compiles your plan into the actual inheritance transaction, exactly as configured above. You can rebuild after any change &mdash; a rebuilt transaction replaces this one. <b>Important:</b> once you distribute the resulting packages, do not spend, consolidate, or otherwise move funds from the vault address &mdash; doing so (even accidentally, e.g. via a wallet's automatic coin consolidation) spends the specific transaction output this plan depends on and voids every package built from it.</p>
                                 <div id="planBuildError" class="alert alert-danger hidden"></div>
                                 <button class="btn btn-primary btn-lg" id="planBuildBtn" type="button" disabled>Build Inheritance Transaction</button>
                             </div>
@@ -681,6 +682,24 @@ div.fixed {
                                 <label>Step 1 &mdash; Inheritance transaction built</label> <span class="small" id="planResultWhen"></span>
                                 <p>A network fee of <b><span id="planResultFee">?</span></b> is included in this transaction, and it is <abbr title="Replace-by-fee: the fee can still be raised later if the network is busy at broadcast time">RBF</abbr>-enabled &mdash; whoever eventually broadcasts it will not need you to set a fee. It cannot move any funds until it carries both your signature and a beneficiary's.</p>
                                 <textarea id="planResultTx" class="form-control" style="height:110px;" readonly></textarea>
+                            </div>
+
+                            <div class="hidden verifyData" id="planSignPreview" style="margin-bottom:15px;">
+                                <div class="alert alert-info">
+                                    <p><b>Review before you sign</b> &mdash; decoded from the exact transaction above, the same way the <a href="#verify">Verify</a> page decodes it.</p>
+                                    <div><b>Lock time</b>: <span class="transactionLockTime"></span></div>
+                                    <div class="transactionRBF"><b>RBF</b>: enabled</div>
+                                    <label style="margin-top:10px;">Outputs &mdash; where the funds actually go</label>
+                                    <table class="table table-condensed outs" style="background:#fff;">
+                                        <thead>
+                                            <tr style="font-weight:bold;">
+                                                <td>Address</td>
+                                                <td>Amount (BTC)</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <div class="panel panel-default" id="planSignPanel">
@@ -1433,6 +1452,43 @@ div.fixed {
                                 <textarea type="text" id="signTransaction" class="form-control" style="height:125px"></textarea>
                             </div>
                         </div>
+
+                        <div class="hidden verifyData" id="signTransactionData" style="margin-top:15px;">
+                            <div class="alert alert-info">
+                                <p><b>Review before you sign</b> &mdash; this is exactly what you are about to sign. It is decoded the same way the <a href="#verify">Verify</a> page decodes it.</p>
+                                <div><b>Lock time</b>: <span class="transactionLockTime"></span></div>
+                                <div class="transactionSegWit"><b>SegWit</b>: True</div>
+                                <div class="transactionRBF"><b>RBF</b>: This is a <a href="https://en.bitcoin.it/wiki/Transaction_replacement" target="_blank">replace by fee</a> transaction!</div>
+
+                                <label style="margin-top:10px;">Inputs</label>
+                                <table class="table table-condensed ins" style="background:#fff;">
+                                    <thead>
+                                        <tr style="font-weight:bold;">
+                                            <td><abbr title="the transaction id">Txid</abbr></td>
+                                            <td><abbr title="index id of the the transaction">N</abbr></td>
+                                            <td><abbr title="is input already signed?">Signed?</abbr></td>
+                                            <td><abbr title="is this a multisig input, and how many signatures does it need?">MultiSig?</abbr></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+
+                                <label>Outputs &mdash; where the funds actually go</label>
+                                <table class="table table-condensed outs" style="background:#fff;">
+                                    <thead>
+                                        <tr style="font-weight:bold;">
+                                            <td><abbr title="address the funds are being sent to">Address</abbr></td>
+                                            <td><abbr title="the amount the address is being sent">Amount (BTC)</abbr></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning hidden" id="signTransactionUndecodable">
+                            <span class="glyphicon glyphicon-exclamation-sign"></span> This does not look like a valid transaction yet &mdash; nothing has been decoded to review.
+                        </div>
+
                         <br>
 
                         <a href="javascript:;" id="signAdvancedCollapse">
@@ -1524,6 +1580,9 @@ div.fixed {
                         <h3>Responsibility</h3>
                         <p>Bitcoin transactions are irreversible once confirmed, and self-custody means you are solely responsible for your keys and for the accuracy of any plan you build. Take time to understand what a transaction does &mdash; using the Verify page &mdash; before signing or broadcasting it. Will-Wallet does not provide legal, tax, or financial advice; an inheritance plan built here is a technical distribution mechanism and is not a substitute for a will, trust, or other legal instrument prepared with qualified advice.</p>
 
+                        <h3>Security &amp; architecture</h3>
+                        <p>For a full plain-language explanation of how Will-Wallet actually handles keys, signing, timelocks, fees, and blockchain connectivity &mdash; including what it deliberately does not do &mdash; see <a href="#security">Security &amp; Architecture</a>.</p>
+
                         <h3>Open source</h3>
                         <p>Will-Wallet is free and open source, released under the <a href="LICENSE">MIT license</a>, which means it's free to use, audit, and modify. The client-side, no-server-custody design described above can be independently verified by reading the source code.</p>
 
@@ -1539,6 +1598,100 @@ div.fixed {
                                 <p>Your browser can't display PDFs inline. <a href="Will-Wallet-Inheritance-Plan-White-Paper.pdf" target="_blank">Open the white paper</a> instead.</p>
                             </iframe>
                         </div>
+                    </div>
+
+                    <div class="tab-pane tab-content" id="security">
+                        <h2>Security &amp; Architecture <small>how Will-Wallet actually works</small></h2>
+                        <p>This page explains Will-Wallet's real architecture and security model in plain language &mdash; what it does, what it deliberately does not do, and where its guarantees end. It's written for both users and for anyone (including an AI coding assistant) reading or modifying this application's source.</p>
+
+                        <h3>What Will-Wallet is</h3>
+                        <p>A self-custody Bitcoin application, focused on transaction construction and inheritance planning, that runs as a single static page in your browser. There is no Will-Wallet account, no Will-Wallet server that holds or processes your keys, and no backend this application depends on to construct or sign a transaction.</p>
+
+                        <h3>What Will-Wallet does <u>not</u> do</h3>
+                        <ul>
+                            <li>It does not custody your Bitcoin. Nothing here ever holds a working combination of keys except the addresses/scripts you and your co-signers control.</li>
+                            <li>It does not require a Will-Wallet account, login, or identity of any kind.</li>
+                            <li>It does not require a Will-Wallet backend for any offline functionality (see below) &mdash; and there is no Will-Wallet backend at all, online or offline.</li>
+                            <li>It does not ask you to give a private key or seed to a server. Every private-key field in this application (Sign, the wallet's open/spend flow, the Inheritance Plan builder's signing step) is read and used by JavaScript running in your own browser tab and is never included in any network request this application makes.</li>
+                            <li>It does not secretly store keys remotely. The only thing saved automatically is an Inheritance Plan <i>draft</i> (names, dates, amounts, public keys) in your browser's own local storage, on your own device &mdash; see Drafts &amp; local storage below.</li>
+                        </ul>
+
+                        <h3>Hosted vs. downloaded &mdash; what actually changes</h3>
+                        <p>A common misconception is that loading Will-Wallet from will-wallet.com is less safe than downloading the page and running it locally because "the website" might see your keys. That's not how this application works, in either case: whether you load <code>index.html</code> from the live site or from a copy on your own disk, the exact same JavaScript runs, in the same way, entirely in your browser. Neither case sends a network request containing your private key, WIF, or seed &mdash; you can verify this yourself by reading the source or watching your browser's network tab while using it.</p>
+                        <p>What genuinely differs between the two is narrower, but real:</p>
+                        <ul>
+                            <li><b>Supply-chain trust at load time.</b> Loading the live page means trusting that <i>that specific page load</i> wasn't tampered with (a compromised server or CDN, a MITM on a connection without HTTPS). A copy you downloaded once and audited doesn't re-expose you to that risk on every subsequent use.</li>
+                            <li><b>Availability.</b> A saved local copy keeps working if the domain, hosting, or maintainers of this project ever disappear. A plan's <a href="#whitepaper">half-signed transactions and distribution packages</a> are plain data (hex strings and text) that don't depend on this website at all once created &mdash; but the tool to construct, verify, and sign new ones does depend on having a copy of the app.</li>
+                        </ul>
+                        <p>Neither point changes where your keys go during use. That's why "download and run locally" is a good practice for supply-chain and availability reasons, not because the hosted version is secretly less private.</p>
+
+                        <h3>Offline operation</h3>
+                        <p>Everything that doesn't inherently require current blockchain state works with no network connection at all:</p>
+                        <ul>
+                            <li>Generating keys and addresses (legacy, SegWit/Bech32, HD/BIP32, multisig)</li>
+                            <li>Constructing a raw transaction from inputs and outputs you provide</li>
+                            <li>Building timelocked outputs (CHECKLOCKTIMEVERIFY redeem scripts) and setting a transaction's nLockTime</li>
+                            <li>Signing a transaction with a private key</li>
+                            <li>Calculating an estimated fee from a chosen fee rate and the transaction's size</li>
+                            <li>Preparing a multisig transaction for additional signers</li>
+                            <li>Creating an Inheritance Plan, and viewing/editing a previously saved draft</li>
+                            <li>Generating the resulting transaction hex and distribution-package text</li>
+                        </ul>
+                        <p>Only two kinds of operation inherently need network access: <b>retrieving live blockchain data</b> (an address's unspent outputs, current fee-rate estimates, a node's block height) and <b>broadcasting a signed transaction</b> to the network. Both are described next.</p>
+
+                        <h3>Blockchain connectivity: three distinct modes</h3>
+                        <p>Configurable on the <a href="#settings">Settings</a> page, independently for "where to broadcast" and "where to read unspent outputs / fee data from":</p>
+                        <ul>
+                            <li><b>No connection.</b> Leave inputs blank and construct a transaction manually (entering a known UTXO's txid/index/script/amount yourself), sign it, and export the hex to broadcast elsewhere.</li>
+                            <li><b>Public blockchain service.</b> The default. This application queries a public API (currently coinb.in's, the project this app was originally forked from) for unspent outputs, fee estimates, and broadcasting. That service sees the Bitcoin address you're querying and the transaction you broadcast &mdash; ordinary, unavoidable metadata exposure for any wallet using a third-party data source &mdash; but never your private key.</li>
+                            <li><b>Your own Bitcoin Core node, via RPC.</b> You control the node; queries and broadcasts go directly from your browser to the host and port you specify, with credentials that stay in this browser tab. See the next section for what this means for security.</li>
+                        </ul>
+
+                        <h3>Connecting to your own Bitcoin Core node</h3>
+                        <p>This is the strongest privacy option, but it comes with its own responsibilities that are different from using the public default:</p>
+                        <ul>
+                            <li><b>RPC credentials are highly sensitive</b> &mdash; equivalent to a password that can move funds through your node's wallet or broadcast on your behalf. This application keeps them in browser memory for the current session only, sends them only in the Basic-Auth header of requests to the exact host/port you configured, and never writes them to local storage, a URL, or a log.</li>
+                            <li><b>Never expose your node's RPC port to the public internet.</b> Bitcoin Core's own documentation warns against binding RPC to an untrusted network. Use <code>127.0.0.1</code> (this machine) or a private network you trust; if you need to reach a node elsewhere, use a VPN or SSH tunnel, not an open port.</li>
+                            <li><b>A remote node is a different trust boundary than a local one.</b> Traffic to a non-local host, without HTTPS, can be observed by anyone on the network path between your browser and the node. The Settings page flags this explicitly when the configured host isn't localhost.</li>
+                            <li><b>Confirm you're on the network you think you're on.</b> A node can be mainnet, testnet, signet, or regtest. The Settings page's "Test connection" button checks the node's actual chain against what this page is configured for, to catch that mismatch before it causes confusion at broadcast time.</li>
+                            <li>Because Bitcoin Core's RPC server doesn't send CORS headers by default, your browser may need to reach the node directly (same machine, local network, or a reverse proxy you control) for these requests to succeed at all &mdash; this is a browser security mechanism working as intended, not a bug in this application.</li>
+                        </ul>
+
+                        <h3>Keys and signing</h3>
+                        <p>Private keys are only ever entered into a password-type field, used immediately by client-side JavaScript to compute a signature (using <a href="https://tools.ietf.org/html/rfc6979" target="_blank">RFC 6979</a> deterministic nonces, not less-predictable random ones), and then the field is cleared. A key you type is never included in a network request, never written to local storage, and never appears in this application's own drafts. Before you sign anything &mdash; on the Sign page or in the Inheritance Plan builder &mdash; the exact transaction is decoded and shown: its inputs, its outputs and their addresses and amounts, its locktime, and its RBF status, using the same decoder as the Verify page. What you see there is what you are about to sign, byte for byte.</p>
+
+                        <h3>Multisig</h3>
+                        <p>Will-Wallet does not require its multisig setups to be created here. A multisig address and redeem script can be produced by any compatible wallet or tool; this application only needs the redeem script (or the public keys and threshold) to construct outputs paying to it, and needs a private key matching one of its public keys to add a signature. Nothing in this application assumes a particular signer will provide the next signature in a multisig flow &mdash; any holder of a valid key for that script can complete it, in any order, using the same Sign mechanism throughout.</p>
+
+                        <h3>Timelocks</h3>
+                        <p>Two independent mechanisms are used, and they guarantee different things:</p>
+                        <ul>
+                            <li><b>nLockTime</b> (a property of one specific transaction) prevents <i>that transaction</i> from being mined before a given date or block height. It does not restrict the coins themselves &mdash; a different transaction spending the same output is unaffected by it.</li>
+                            <li><b>CHECKLOCKTIMEVERIFY</b> (compiled into an output's script) restricts the coins at that address: no spending path exists at all until the specified time, regardless of which transaction attempts it.</li>
+                        </ul>
+                        <p>Neither guarantees that a beneficiary will actually be able to spend the moment the lock expires. A CLTV output can only be spent with the exact redeem script and a matching private key &mdash; both must still exist and be usable. A pre-signed, nLockTime-gated transaction depends on the specific unspent output it references still being unspent when the time comes; spending, consolidating, or sweeping that output beforehand (even accidentally, e.g. through routine wallet activity) invalidates it. Will-Wallet surfaces this explicitly in the Inheritance Plan builder and its distribution packages, but cannot prevent it, since it's a property of Bitcoin's UTXO model, not of this application.</p>
+
+                        <h3>Fees</h3>
+                        <p>You choose a <b>fee rate</b> (satoshis per virtual byte). This application estimates the constructed transaction's size (reusing the same estimator as the Fees page), multiplies the two to get the actual <b>transaction fee</b>, and rebuilds the transaction so that fee is exactly what the inputs exceed the outputs by. A rate chosen today is a guess about future network conditions; if it turns out too low by the time a delayed transaction is broadcast, the RBF flag (below) is what allows it to be corrected without re-signing from scratch.</p>
+
+                        <h3>Replace-By-Fee (RBF)</h3>
+                        <p>An RBF-flagged transaction (non-final sequence numbers) may be replaced in nodes' mempools by another transaction spending the same inputs with a higher fee, before it confirms. Will-Wallet enables this by default on inheritance-plan transactions specifically so a stale fee doesn't strand a distribution transaction years later. It does not change what the transaction pays once confirmed, and it does not help after confirmation &mdash; whoever eventually broadcasts the transaction still needs a wallet or tool capable of fee-bumping if the original rate is no longer sufficient.</p>
+
+                        <h3>Inheritance: artifacts, not custody</h3>
+                        <p>The <a href="#newInheritancePlan">Inheritance Plan builder</a> produces data &mdash; a transaction (unsigned, then half-signed once you sign it) and a set of distribution packages containing that transaction plus the information each beneficiary needs. It does not hold, escrow, or transmit funds on your behalf, and no Will-Wallet service is involved in a beneficiary eventually completing and broadcasting that transaction. The artifacts are only as durable and correct as your own handling of them: keeping the vault's funding output unspent until release, distributing packages to the right people, and revoking (by spending the vault output yourself) if the plan ever needs to change. Will-Wallet is a technical distribution mechanism, not a will, trust, or other legal instrument &mdash; it does not address probate, contest risk, or tax treatment in any jurisdiction, and using it doesn't remove the value of also naming these arrangements in a legally binding document.</p>
+
+                        <h3>Drafts &amp; local storage</h3>
+                        <p>An Inheritance Plan in progress is saved automatically to your browser's local storage so it survives closing the tab. That draft contains plan structure only &mdash; beneficiary labels, dates, amounts, and public keys &mdash; never a private key. It is local storage, not a Will-Wallet account: it lives only in that one browser, on that one device, and clearing site data removes it. Building a plan does not depend on this storage; drafts are a convenience, not the source of truth for a completed transaction.</p>
+
+                        <h3>Honest limitations</h3>
+                        <p>This section exists so nothing above reads as a stronger claim than it is:</p>
+                        <ul>
+                            <li>Browser-based JavaScript execution is not the same guarantee as an air-gapped, hardware-isolated signing device. Anyone who can run malicious code in the same browser context you use (a compromised extension, a tampered page load) could in principle interfere with a signing operation while it happens.</li>
+                            <li>Using the public blockchain service reveals the addresses you query and the transactions you broadcast to that service, the ordinary trade-off of not running your own node.</li>
+                            <li>Bitcoin's own protocol limitations apply regardless of this application: a pre-signed transaction can be invalidated by spending its input; a fixed fee can become insufficient; a lost key or lost redeem script is unrecoverable by design.</li>
+                            <li>Will-Wallet is not audited by a third-party security firm. It is open source specifically so it can be read and verified by anyone, including you.</li>
+                            <li>This application does not, and cannot, make Bitcoin self-custody risk-free. It aims to make the risks visible and to avoid adding risks of its own.</li>
+                        </ul>
                     </div>
 
                     <div class="tab-pane tab-content" id="settings">
@@ -1676,6 +1829,13 @@ div.fixed {
                             <br>
 
                             <div class="alert alert-info"><span class="glyphicon glyphicon-info-sign"></span> These fields are used only for this browser session, are sent only to the host and port you enter above, and are never saved or transmitted anywhere else. If your browser reports a network or connection error, your node's RPC server may need to be reachable from your browser directly (Bitcoin Core's RPC server does not send CORS headers by default) &mdash; for example by running your browser on the same machine as the node, or by placing a local reverse proxy you control in front of it.</div>
+
+                            <div class="alert alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> <b>Never expose Bitcoin Core's RPC port to the public internet.</b> These credentials can move your funds. Bitcoin Core's own documentation warns against binding RPC to an untrusted network. Connect to <code>127.0.0.1</code> (this machine) or a node on your own private network only &mdash; if you must reach a node elsewhere, use a VPN or SSH tunnel you control, never a plain open port.</div>
+
+                            <div class="alert alert-warning hidden" id="rpcRemoteWarning"><span class="glyphicon glyphicon-exclamation-sign"></span> This host is not localhost. Connecting to a node over your network (rather than on this machine) is a different, higher-risk trust boundary than a local node &mdash; anyone who can see this network traffic without HTTPS enabled can see your RPC credentials.</div>
+
+                            <button type="button" class="btn btn-default btn-sm" id="rpcTestBtn">Test connection</button>
+                            <div id="rpcTestStatus" class="hidden" style="margin-top:8px;"></div>
                         </div>
 
                         <br>
