@@ -1,0 +1,6 @@
+# User-generated inheritance plan files must never be committed - they are
+# local-only data saved by the Inheritance Plan builder's "Download Plan" /
+# "Load Plan" workflow (see doc/README.md).
+doc/*
+!doc/.gitkeep
+!doc/README.md

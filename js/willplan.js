@@ -748,7 +748,7 @@ $(document).ready(function(){
 	}
 	function saveDraft(){
 		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify({plan:plan}));
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(exportPlanData()));
 			$("#planDraftStatus").text(built
 				? ('Built '+built.when+' — edits below are drafts until you rebuild.')
 				: 'Draft — saved on this device. Nothing is built until you use Review & Build.');
@@ -756,19 +756,130 @@ $(document).ready(function(){
 	}
 	function loadDraft(){
 		try {
-			var d = JSON.parse(localStorage.getItem(STORAGE_KEY));
-			if(d && d.plan && d.plan.beneficiaries){
-				plan = d.plan;
-				if(!plan.release){ plan.release = {mode:null, lock:0}; }
-				if(!plan.feeRate){ plan.feeRate = '1'; }
-				if(!plan.lastSize){ plan.lastSize = 400; }
-				$.each(plan.beneficiaries, function(i,b){
-					if(b.id*1>=uid){ uid = b.id*1+1; }
-					$.each(b.allocations, function(j,a){ if(a.id*1>=uid){ uid = a.id*1+1; } });
-				});
-			}
+			applyLoadedPlan(JSON.parse(localStorage.getItem(STORAGE_KEY)));
 		} catch(e) { }
 	}
+
+	/* ---------- shared plan import/export (localStorage draft, and the
+	   downloadable/loadable .json file use exactly the same shape) ---------- */
+
+	var PLAN_FILE_SCHEMA = 'will-wallet-inheritance-plan';
+	var PLAN_FILE_VERSION = 1;
+
+	function exportPlanData(){
+		return {schema: PLAN_FILE_SCHEMA, version: PLAN_FILE_VERSION, exportedAt: new Date().toISOString(), plan: plan, built: built};
+	}
+
+	/* accepts either a saved draft ({plan}) or a full exported plan file
+	   ({schema, version, plan, built}) — returns true if it contained a usable plan */
+	function applyLoadedPlan(d){
+		if(!d || !d.plan || !$.isArray(d.plan.beneficiaries)){ return false; }
+
+		plan = d.plan;
+		if(!plan.release){ plan.release = {mode:null, lock:0}; }
+		if(!plan.feeRate){ plan.feeRate = '1'; }
+		if(!plan.lastSize){ plan.lastSize = 400; }
+		$.each(plan.beneficiaries, function(i,b){
+			if(b.id*1>=uid){ uid = b.id*1+1; }
+			$.each(b.allocations, function(j,a){ if(a.id*1>=uid){ uid = a.id*1+1; } });
+		});
+
+		built = (d.built && d.built.hex) ? d.built : null;
+		return true;
+	}
+
+	/* re-render every part of the page from the current plan/built state -
+	   used both at page load and right after importing a saved plan file */
+	function fullRender(){
+		$("#planName").val(plan.name);
+		$("#planVaultSource").val(plan.vaultSource);
+		$("#planFeeRate").val(plan.feeRate);
+		syncReleaseCards();
+		if(plan.release.mode=='date' && plan.release.lock*1>0){
+			$('#planReleaseDatePicker').data("DateTimePicker").date(moment.unix(plan.release.lock*1));
+		} else {
+			$('#planReleaseDatePicker').data("DateTimePicker").date(null);
+		}
+		renderBeneficiaries(); // also calls refreshDerived()
+		if(built){
+			renderResult();
+		} else {
+			$("#planResult").addClass('hidden');
+			renderPackages(); // hides #planPackagesWrap - built is null, so nothing to show
+		}
+	}
+
+	/* download the completed, signed plan as a .json file - a plain client-side
+	   Blob download, nothing is sent anywhere. Available once packages exist
+	   (i.e. once the transaction is built and signed - see renderPackages()). */
+	$("#planDownloadBtn").click(function(){
+		var json = JSON.stringify(exportPlanData(), null, 2);
+		var blob = new Blob([json], {type: 'application/json'});
+		var url = URL.createObjectURL(blob);
+		var slug = (plan.name||'inheritance-plan').replace(/[^a-z0-9]+/gi,'-').toLowerCase().replace(/^-+|-+$/g,'') || 'inheritance-plan';
+		var a = document.createElement('a');
+		a.href = url;
+		a.download = 'will-wallet-plan-'+slug+'-'+moment().format('YYYY-MM-DD')+'.json';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+	});
+
+	/* load a previously saved plan file - read entirely in the browser via
+	   FileReader; the file never leaves this device */
+	$("#planLoadFileBtn").click(function(){
+		$("#planLoadError").addClass('hidden');
+		$("#planLoadFileInput").val('').click();
+	});
+	$("#planLoadFileInput").on('change', function(){
+		var file = this.files && this.files[0];
+		if(!file){ return; }
+		var reader = new FileReader();
+		reader.onload = function(e){
+			var data;
+			try {
+				data = JSON.parse(e.target.result);
+			} catch(err){
+				$("#planLoadError").removeClass('hidden').text('That file is not valid JSON.');
+				return;
+			}
+			if(!applyLoadedPlan(data)){
+				$("#planLoadError").removeClass('hidden').text('That file does not look like a Will-Wallet inheritance plan.');
+				return;
+			}
+			$("#planLoadError").addClass('hidden');
+			fullRender();
+			saveDraft();
+		};
+		reader.onerror = function(){
+			$("#planLoadError").removeClass('hidden').text('Could not read that file.');
+		};
+		reader.readAsText(file);
+	});
+
+	/* explicit "start over" - the page still auto-restores the last plan on load
+	   (loadDraft(), below), this is the user-triggered way to clear that and
+	   begin a new one instead. Also clears the loaded vault inputs so a stale
+	   vault isn't left mismatched against a blank plan. */
+	function resetPlanState(){
+		plan = { name:'Untitled Inheritance Plan', vaultSource:'', release:{mode:null, lock:0}, feeRate:'1', lastSize:400, beneficiaries:[] };
+		built = null;
+		uid = 1;
+		$("#inputs .txidRemove, #inputs .txidClear").click();
+		$("#planSignKey").val('');
+		$("#planSignedTx").val('');
+		$("#planLoadError").addClass('hidden');
+		$("#planBuildError").addClass('hidden');
+		resetBuildBtn();
+		fullRender();
+		saveDraft();
+	}
+	$("#planNewBtn").click(function(){
+		if(window.confirm('Start a new inheritance plan? This clears the plan currently on this page, including the loaded vault. If you haven\'t downloaded it yet, it will be lost.')){
+			resetPlanState();
+		}
+	});
 
 	/* ---------- static events ---------- */
 
@@ -924,12 +1035,5 @@ $(document).ready(function(){
 	/* ---------- init ---------- */
 
 	loadDraft();
-	$("#planName").val(plan.name);
-	$("#planVaultSource").val(plan.vaultSource);
-	$("#planFeeRate").val(plan.feeRate);
-	syncReleaseCards();
-	if(plan.release.mode=='date' && plan.release.lock*1>0){
-		$('#planReleaseDatePicker').data("DateTimePicker").date(moment.unix(plan.release.lock*1));
-	}
-	renderBeneficiaries();
+	fullRender();
 });

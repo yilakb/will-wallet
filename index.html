@@ -40,7 +40,7 @@
 
     <script type="text/javascript" src="js/coin.js"></script>
     <script type="text/javascript" src="js/wallet.js?v=2"></script>
-    <script type="text/javascript" src="js/willplan.js?v=7"></script>
+    <script type="text/javascript" src="js/willplan.js?v=9"></script>
     
 </head>
 
@@ -610,6 +610,16 @@ div.fixed {
                         <p class="help-block small">Loading retrieves your vault's unspent funds (network required). Working fully offline? Enter your inputs manually on the <a href="#newTransaction">Transaction</a> page &mdash; the plan picks them up automatically.</p>
                         <div class="hidden alert alert-info" id="planVaultInfo"></div>
 
+                        <p class="small">
+                            Starting from a plan you saved earlier?
+                            <button type="button" class="btn btn-default btn-xs" id="planLoadFileBtn"><span class="glyphicon glyphicon-folder-open"></span> Load Plan&hellip;</button>
+                            <input type="file" id="planLoadFileInput" accept="application/json,.json" class="hidden">
+                            <span class="text-muted">Reads INHERITANCE PACKAGE file.</span>
+                            &nbsp;&middot;&nbsp;
+                            <button type="button" class="btn btn-default btn-xs" id="planNewBtn" title="Clear everything below and start a new inheritance plan"><span class="glyphicon glyphicon-file"></span> New Plan</button>
+                        </p>
+                        <div class="alert alert-danger hidden" id="planLoadError"></div>
+
                         <div class="panel panel-default" id="planHeaderPanel">
                             <div class="panel-body">
                                 <input type="text" id="planName" class="planNameInput" value="Untitled Inheritance Plan" title="Plan name &mdash; a label for you, never written to the blockchain">
@@ -724,6 +734,12 @@ div.fixed {
                                 <h3>Step 3 &mdash; Distribution packages</h3>
                                 <p class="small text-muted" id="planPackagesNote"></p>
                                 <div id="planPackages"></div>
+
+                                <div class="alert alert-success">
+                                    <b>Save this plan</b>
+                                    <p>Download the complete, signed plan file so you can reopen and review it later, or move it to another copy of Will-Wallet &mdash; nothing here is ever uploaded anywhere.</p>
+                                    <button type="button" class="btn btn-primary" id="planDownloadBtn"><span class="glyphicon glyphicon-download-alt"></span> Download Inheritance Plan </button>
+                                </div>
                             </div>
                         </div>
                         <br>
