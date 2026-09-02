@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="css/w3-theme-black.css">
     <link rel="stylesheet" href="css/bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
-    <link rel="stylesheet" href="css/style.css?v=3" media="screen">
+    <link rel="stylesheet" href="css/style.css?v=4" media="screen">
 
     <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="js/moment.min.js"></script>
@@ -57,15 +57,22 @@
     }
 
     .w3-sidebar {
-        z-index: 3;
+        /* high enough to always sit above any other in-page content (sticky
+           headers, panels, etc.) so the mobile nav behaves as a true overlay */
+        z-index: 1000;
         width: 200px;
         top: 43px;
         bottom: 0;
         height: inherit;
     }
 
+    #myOverlay {
+        z-index: 999;
+    }
+
     body {
         background-color: gold;
+        overflow-x: hidden;
     }
     
 div.fixed {
