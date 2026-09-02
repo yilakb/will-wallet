@@ -1699,16 +1699,42 @@ $(document).ready(function() {
 
 	$(".qrcodeBtn").click(function(){
 		$("#qrcode").html("");
+		// every QR button says what it's actually showing, from its own
+		// data-qr-label - one shared mechanism, so a future button just needs
+		// that attribute rather than any new modal-title logic
+		$("#modalQrcode .modal-title").text($(this).data('qr-label') || 'QR Code');
 		var thisbtn = $(this).parent().parent();
 		var qrstr = false;
-		var ta = $("textarea",thisbtn);
+		// prefer the exact textarea this button sits next to - on pages with more
+		// than one textarea (e.g. Sign's unsigned input + signed output, or the
+		// Inheritance Plan builder's several), searching the wider two-parent
+		// scope can silently match the wrong one; a direct sibling is unambiguous
+		var ta = $(this).siblings("textarea");
+		if(ta.length==0){ ta = $("textarea",thisbtn); }
 
 		if(ta.length>0){
-			var w = (screen.availWidth > screen.availHeight ? screen.availWidth : screen.availHeight)/3;
-			var qrcode = new QRCode("qrcode", {width:w, height:w});
+			// Sized to the modal, not the physical screen (the previous
+			// screen.availWidth/3 formula could easily exceed the modal's own
+			// width on a wide monitor, with nothing to contain it - see the
+			// max-width rule on #qrcode in style.css as a hard backstop).
+			// Denser data needs a bigger code to stay scannable at all, so this
+			// scales up a little for longer payloads, capped well within the
+			// enlarged (.modal-lg) dialog.
+			var dataLen = $(ta).val().length;
+			var w = Math.min(480, 260 + dataLen/6);
+			// Error-correction level L (lowest redundancy, highest capacity: up to
+			// 2953 bytes at QR version 40) instead of this library's default H
+			// (max 1273 bytes) - this data is read camera-to-screen, not off a
+			// scratched sticker in the field, so the extra redundancy of H isn't
+			// worth its much smaller ceiling for something like a multisig
+			// transaction's hex, which routinely runs past H's limit.
+			var qrcode = new QRCode("qrcode", {width:w, height:w, correctLevel: QRCode.CorrectLevel.L});
 			qrstr = $(ta).val();
-			if(qrstr.length > 1024){
-				$("#qrcode").html("<p>Sorry the data is too long for the QR generator.</p>");
+			// 2500 leaves headroom under the real ~2953-byte ceiling at level L,
+			// short of the densest version-40 codes, which are hard to scan reliably
+			if(qrstr.length > 2500){
+				$("#qrcode").html("<p>Sorry, this is too long for a single QR code ("+qrstr.length+" characters, limit ~2500). Copy the text above instead, or reduce the number of beneficiaries/allocations if this is an inheritance plan transaction.</p>");
+				return;
 			}
 		} else {
 			var qrcode = new QRCode("qrcode");

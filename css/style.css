@@ -2,6 +2,14 @@ html, body {
 	height: 100%;
 }
 
+/* the generated QR code (canvas, table-fallback, or img) must never be able to
+   render wider than the modal that holds it, regardless of the pixel size the
+   QR library was asked for */
+#qrcode canvas, #qrcode img, #qrcode table {
+	max-width: 100%;
+	height: auto;
+}
+
 body {
 	background-color:#ffffff;
 }
