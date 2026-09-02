@@ -5,7 +5,7 @@ A self-custody Bitcoin wallet focused on inheritance and distribution planning, 
 
 Live version available at https://will-wallet.com/
 
-Github URL: https://github.com/lbtil/will-wallet
+Github URL: https://github.com/yilakb/will-wallet
 
 Will-Wallet supports a number of key features, including:
 
