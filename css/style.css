@@ -1,0 +1,241 @@
+html, body {
+	height: 100%;
+}
+
+body {
+	background-color:#ffffff;
+}
+
+.displaynone {
+	display:none;
+}
+
+#wrap {
+	min-height: 100%;
+	height: auto;
+	/* Negative indent footer by its height */
+	margin: 0 auto -60px;
+	/* Pad bottom by footer height */
+	padding: 0 0 60px;
+}
+
+#footer {
+	height: 60px;
+	background-color: #f5f5f5;
+	padding-top: 20px;
+}
+
+.alert {
+        overflow: hidden;
+        -ms-text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+        text-overflow: ellipsis;
+        display: block;
+}
+
+#fees .txi_regular {
+	background: #d3d3d3;
+}
+
+#fees .txi_segwit {
+	background: #bae1ff;
+}
+
+#fees .txi_multisig {
+	background: #baffc9;
+}
+
+#fees .txi_hodl {
+	background: #ffdfba;
+}
+
+#fees .txi_unknown {
+	background: #ffb3ba;
+}
+
+#fees .txo_p2pkh {
+	background: #E679C8;
+}
+
+#fees .txo_p2sh {
+	background: #FAFE92;
+}
+
+#fees .txinputs {
+}
+
+#fees .txoutputs {
+}
+
+.hideOverflow {
+	overflow:hidden;
+	white-space:nowrap;
+	text-overflow:ellipsis;
+}
+
+#fees .slider {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 100%;
+	height: 30px;
+	outline: none; 
+	opacity: 0.7;
+	-webkit-transition: .2s;
+	transition: opacity .2s;
+	border: 2px dotted #c3c3c3;
+}
+
+#fees .sliderbtn {
+	height: 30px;
+	width: 30px;
+	padding: 0px;
+	margin: 0px;
+	border: 0px;
+}
+
+#fees .slider:hover {
+	opacity: 1;
+}
+
+#fees .slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 32px;
+	height: 32px;
+	border: 0;
+	background: url('../images/btc32x.png');
+	cursor: pointer;
+}
+
+#fees .slider::-moz-range-thumb {
+	width: 32px;
+	height: 32px;
+	border: 0;
+	background: url('../images/btc32x.png');
+	cursor: pointer;
+}
+
+#fees .total {
+	font-size: 100px;
+}
+
+/* inheritance plan builder */
+#planHeaderPanel {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	z-index: 40;
+}
+.planNameInput {
+	border: none;
+	background: transparent;
+	font-size: 18px;
+	font-weight: bold;
+	width: 55%;
+	outline: none;
+	padding: 0;
+}
+.planReleaseCard {
+	cursor: pointer;
+}
+.planReleaseCard.planCardActive {
+	border-color: #337ab7;
+	background: #f4f9ff;
+}
+.planBenefCard {
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+.planBenefCard .planBenefName {
+	border: none;
+	background: transparent;
+	font-weight: bold;
+	outline: none;
+	width: 45%;
+}
+.planAddr {
+	font-family: monospace;
+	font-size: 12px;
+	word-break: break-all;
+	color: #31708f;
+	margin-top: 4px;
+}
+.planBadKey {
+	border-color: #a94442 !important;
+}
+.planDot {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 4px;
+}
+.planAllocRow {
+	margin-bottom: 8px;
+}
+.planTimelineWrap {
+	border: 1px solid #ddd;
+	background: #fff;
+	padding: 10px;
+	overflow: hidden;
+}
+.planTimelineLane {
+	position: relative;
+	height: 26px;
+}
+.planTimelineName {
+	position: absolute;
+	left: 0;
+	top: 4px;
+	font-size: 11px;
+	font-weight: bold;
+	width: 90px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.planTimelineTrack {
+	position: relative;
+	margin-left: 95px;
+	height: 22px;
+	background: #fafafa;
+	border-left: 1px solid #eee;
+}
+.planTimelineShade {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0,0,0,0.07);
+}
+.planTimelineRel {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: #d9534f;
+}
+.planTimelineDot {
+	position: absolute;
+	top: 5px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	margin-left: -6px;
+	border: 2px solid #fff;
+	box-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+.planTimelineDot.planEarly {
+	border-color: #f0ad4e;
+	box-shadow: 0 0 5px #f0ad4e;
+}
+.planTimelineAxis {
+	font-size: 10px;
+	color: #999;
+	background: none;
+	border-left: none;
+	height: 16px;
+}
+#planPackages .panel {
+	border-left-width: 5px;
+	border-left-style: solid;
+}
